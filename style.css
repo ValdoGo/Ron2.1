@@ -394,103 +394,14 @@ small {
 /* ==========================================
    ESTILIZAÇÃO E RESPONSIVIDADE DO GRÁFICO
    ========================================== */
-
-.analytics-container {
-    display: grid;
-    grid-template-columns: 1fr; /* Padrão Mobile: Uma coluna empilhada */
-    gap: 16px;
-    margin-bottom: 24px;
-    background: #0f172a;
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-}
-
-/* Organização dos cards de estatísticas */
-.stats-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    justify-content: center;
-}
-
-.stat-card {
-    background: #1e293b;
-    padding: 12px;
-    border-radius: 8px;
-}
-
-.stat-card small {
-    color: #64748b;
-    text-transform: uppercase;
-    font-weight: bold;
-    font-size: 0.75rem;
-}
-
-.stat-card h3 {
-    margin: 4px 0 0 0;
-    color: #f8fafc;
-    font-size: 1.2rem;
-}
-
-/* Cores das bordas laterais dos cards */
-.stat-blue { border-left: 4px solid #3b82f6; }
-.stat-green { border-left: 4px solid #10b981; }
-.stat-red { border-left: 4px solid #ef4444; }
-
-/* Container do Canvas (Chart.js precisa de posição relativa e altura controlada) */
-.chart-panel {
-    background: #1e293b;
-    padding: 12px;
-    border-radius: 8px;
-    position: relative;
-    height: 200px; /* Altura ideal e compacta para mobile */
-    width: 100%;
-}
-
-/* Media Query para Telas Maiores (Tablets e Desktops) */
-@media (min-width: 768px) {
-    .analytics-container {
-        grid-template-columns: 1fr 2.5fr; /* Gráfico ganha mais espaço na horizontal */
-        padding: 20px;
-        gap: 20px;
-    }
-    
-    .chart-panel {
-        height: 240px; /* Gráfico fica ligeiramente maior em telas grandes */
-    }
-
-    .stat-card h3 {
-        font-size: 1.35rem;
-    }
-}
-
-/* Ajuste fino extra para ecrãs ultra-pequenos (Media Query de 480px que já tens) */
-@media (max-width: 480px) {
-    .analytics-container {
-        padding: 10px;
-        gap: 12px;
-    }
-    .chart-panel {
-        height: 180px; /* Reduz ligeiramente para não empurrar muito o histórico para baixo */
-    }
-    .stat-card {
-        padding: 8px 10px;
-    }
-    .stat-card h3 {
-        font-size: 1.1rem;
-    }
-}
-
-
-
 /* ==========================================
-   ESTILIZAÇÃO E RESPONSIVIDADE DO GRÁFICO (ULTRA-COMPACTO)
+   SISTEMA DE ANALYTICS E GRÁFICO (UNIFICADO)
    ========================================== */
 
+/* Configuração Padrão: Mobile First */
 .analytics-container {
     display: flex;
-    flex-direction: column; /* Mobile: Cartões em cima, gráfico em baixo */
+    flex-direction: column;
     gap: 12px;
     margin-bottom: 20px;
     background: #0f172a;
@@ -499,10 +410,9 @@ small {
     border: 1px solid var(--border-color);
 }
 
-/* Painel de Estatísticas */
 .stats-panel {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Mobile: Força os 3 cartões a ficarem lado a lado */
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     width: 100%;
 }
@@ -511,71 +421,76 @@ small {
     background: #1e293b;
     padding: 8px 6px;
     border-radius: 8px;
-    text-align: center; /* Centraliza o texto para economizar espaço lateral */
+    text-align: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    border-top: 3px solid transparent; /* Reserva o espaço para não saltar */
 }
 
-/* Deixa a borda colorida no topo em vez da lateral para não apertar o texto no mobile */
-.stat-blue { border-top: 3px solid #3b82f6; }
-.stat-green { border-top: 3px solid #10b981; }
-.stat-red { border-top: 3px solid #ef4444; }
+.stat-blue { border-top-color: #3b82f6; border-left: none; }
+.stat-green { border-top-color: #10b981; border-left: none; }
+.stat-red { border-top-color: #ef4444; border-left: none; }
 
 .stat-card small {
     color: #64748b;
     text-transform: uppercase;
     font-weight: bold;
-    font-size: 0.65rem; /* Texto bem compacto para não quebrar linha */
+    font-size: 0.65rem;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Se o texto for grande, põe "..." em vez de quebrar o layout */
+    text-overflow: ellipsis;
 }
 
 .stat-card h3 {
     margin: 4px 0 0 0;
     color: #f8fafc;
-    font-size: 1rem; /* Números ligeiramente menores para caber no telemóvel */
+    font-size: 1rem;
     font-family: monospace;
 }
 
-/* Container do Gráfico */
 .chart-panel {
     background: #1e293b;
     padding: 10px;
     border-radius: 8px;
     position: relative;
-    height: 160px; /* Altura reduzida no mobile para priorizar a visualização das tabelas */
+    height: 160px; /* Altura controlada para mobile */
     width: 100%;
 }
 
+/* O Chart.js precisa que o canvas herde o tamanho do pai de forma correta */
+.chart-panel canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 /* ==========================================
-   MEDIA QUERY PARA TELAS MAIORES (Tablets e Desktops)
+   ADAPTAÇÃO PARA DESKTOP (Telas Maiores)
    ========================================== */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
     .analytics-container {
         display: grid;
-        grid-template-columns: 1fr 2.5fr; /* Lado a lado no computador */
+        grid-template-columns: 1fr 2.5fr; /* Estatísticas à esquerda, gráfico à direita */
         padding: 20px;
         gap: 20px;
     }
     
     .stats-panel {
         display: flex;
-        flex-direction: column; /* Volta a empilhar na vertical no desktop */
+        flex-direction: column; /* Empilha verticalmente no desktop */
         gap: 12px;
     }
 
     .stat-card {
-        padding: 12px;
+        padding: 14px;
         text-align: left;
-        border-top: none;
+        border-top: none; /* Remove a borda superior do mobile */
     }
 
-    /* No desktop a borda volta para a lateral esquerda */
-    .stat-blue { border-left: 4px solid #3b82f6; }
-    .stat-green { border-left: 4px solid #10b981; }
-    .stat-red { border-left: 4px solid #ef4444; }
+    /* Cores voltam para a lateral esquerda no desktop */
+    .stat-blue { border-left: 4px solid #3b82f6; border-top: none; }
+    .stat-green { border-left: 4px solid #10b981; border-top: none; }
+    .stat-red { border-left: 4px solid #ef4444; border-top: none; }
 
     .stat-card small {
         font-size: 0.75rem;
@@ -586,6 +501,6 @@ small {
     }
 
     .chart-panel {
-        height: 230px; /* Gráfico maior e mais imersivo no desktop */
+        height: 240px; /* Mais espaço vertical no monitor do PC */
     }
 }
