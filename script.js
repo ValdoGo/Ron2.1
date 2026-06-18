@@ -9,6 +9,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
+let meuGrafico = null; // Guardará a instância do Chart.js
 
 // Referências das tabelas na nuvem
 const dbRefAbertas = ref(database, 'operacoesAbertas');
@@ -243,8 +244,9 @@ function renderizarTabelas() {
     // 2. RENDERIZAÇÃO DA TABELA DE HISTÓRICO (OPERAÇÕES FECHADAS)
     if (operacoesFechadas.length === 0) {
         tabelaFechadas.innerHTML = `<tr><td colspan="6" style="color:#64748b; text-align:center;">Nenhum histórico disponível</td></tr>`;
+        atualizarAnalytics([]); // Envia vazio se não houver histórico
     } else {
-        // Exibe o histórico ordenado pelo mais recente primeiro
+        // Exibe o histórico ordenado pelo mais recente primeiro para a tabela
         const historicoOrdenado = [...operacoesFechadas].reverse();
         tabelaFechadas.innerHTML = historicoOrdenado.map(trade => `
             <tr>
@@ -256,6 +258,104 @@ function renderizarTabelas() {
                 <td><b>$${trade.saldoAposFecho ? trade.saldoAposFecho.toFixed(2) : '0.00'}</b></td>
             </tr>
         `).join('');
+
+        // Atualiza os Analytics usando o histórico na ordem cronológica correta (antigo para o novo)
+        atualizarAnalytics(operacoesFechadas);
+    }
+}
+
+// 3. FUNÇÃO AUXILIAR PARA PROCESSAR GRÁFICO E CARTÕES
+function atualizarAnalytics(dadosHistorico) {
+    const totalTrades = dadosHistorico.length;
+    
+    if (totalTrades === 0) {
+        document.getElementById('stat-total').innerText = "0";
+        document.getElementById('stat-winrate').innerText = "0%";
+        document.getElementById('stat-lucro').innerText = "$0.00";
+        return;
+    }
+
+    let wins = 0;
+    let lucroTotal = 0;
+    let pontosSaldo = [100.00]; // Ponto de partida inicial padrão (ou ajuste conforme seu depósito inicial)
+    let labelsEixoX = ["Início"];
+
+    // Processa os dados cronologicamente
+    dadosHistorico.forEach((trade, index) => {
+        if (trade.status === 'WIN') wins++;
+        
+        // Limpa a string de resultado de "+$10.50" para float 10.50
+        if (trade.resultadoFinal) {
+            const valorLimpo = parseFloat(trade.resultadoFinal.replace('$', '').replace('+', ''));
+            lucroTotal += valorLimpo;
+        }
+
+        // Guarda o saldo resultante para desenhar no gráfico
+        if (trade.saldoAposFecho) {
+            pontosSaldo.push(trade.saldoAposFecho);
+        } else {
+            pontosSaldo.push(100.00 + lucroTotal); // Fallback de segurança
+        }
+        
+        // Extrai apenas a hora ou data curta para não sobrecarregar o gráfico
+        const dataCurta = trade.dataFecho ? trade.dataFecho.split(' ')[0] : `#${index + 1}`;
+        labelsEixoX.push(dataCurta);
+    });
+
+    const winRate = ((wins / totalTrades) * 100).toFixed(1);
+
+    // Atualiza os elementos de texto na tela
+    document.getElementById('stat-total').innerText = totalTrades;
+    document.getElementById('stat-winrate').innerText = `${winRate}%`;
+    
+    const txtLucro = document.getElementById('stat-lucro');
+    txtLucro.innerText = `${lucroTotal >= 0 ? '+' : ''}$${lucroTotal.toFixed(2)}`;
+    txtLucro.style.color = lucroTotal >= 0 ? '#10b981' : '#ef4444';
+
+    // RENDERIZAÇÃO OU ATUALIZAÇÃO DO GRÁFICO CHART.JS
+    const ctx = document.getElementById('graficoSaldo').getContext('2d');
+    
+    if (meuGrafico) {
+        // Se o gráfico já existe, apenas atualiza os dados para evitar flickering
+        meuGrafico.data.labels = labelsEixoX;
+        meuGrafico.data.datasets[0].data = pontosSaldo;
+        meuGrafico.update();
+    } else {
+        // Cria a primeira instância do gráfico
+        meuGrafico = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labelsEixoX,
+                datasets: [{
+                    label: 'Curva de Capital ($)',
+                    data: pontosSaldo,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.2, // Linha levemente curva
+                    fill: true,
+                    pointBackgroundColor: '#3b82f6',
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false } // Oculta a legenda redundante
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#1e293b' },
+                        ticks: { color: '#64748b', maxTicksLimit: 8 }
+                    },
+                    y: {
+                        grid: { color: '#1e293b' },
+                        ticks: { color: '#64748b' }
+                    }
+                }
+            }
+        });
     }
 }
 
