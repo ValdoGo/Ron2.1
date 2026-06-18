@@ -1,6 +1,6 @@
 // VARIÁVEIS DO FIREBASE (Carrega os módulos oficiais direto da nuvem para o GitHub Pages)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, push, remove, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // Configuração oficial com o link do seu projeto Firebase
 const firebaseConfig = {
@@ -9,39 +9,19 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
-const dbRefAbertas = ref(database, 'operacoesAbertas');
 
-// Variáveis Globais do Sistema
+// Referências das tabelas na nuvem
+const dbRefAbertas = ref(database, 'operacoesAbertas');
+const dbRefFechadas = ref(database, 'operacoesFechadas');
+const dbRefSaldo = ref(database, 'saldoSistema');
+
+// Variáveis Globais do Sistema (Valores iniciais de segurança caso o Firebase esteja vazio)
 let saldo = 100.00;
 let equity = 100.00;
 let precoAtualOuro = 0;
-let operacoesFechadas = [];
 
-// O Firebase irá gerenciar este array agora em tempo real (unindo Ordens do Bot + Ordens Manuais)
 let operacoesAbertas = []; 
-
-// ESCUTADOR DA NUVEM: Assume e respeita o precoEntrada que foi enviado para o Firebase
-onValue(dbRefAbertas, (snapshot) => {
-    const dados = snapshot.val();
-    if (dados) {
-        operacoesAbertas = Object.keys(dados).map(key => {
-            const ordem = dados[key];
-            
-            // Força o precoEntrada a ser um número válido. Se não vier do Firebase, assume 0 (mas o correto é vir de lá)
-            const precoDeEntradaFixado = ordem.precoEntrada ? parseFloat(ordem.precoEntrada) : 0;
-
-            return {
-                id_firebase: key, // Guardamos o ID único gerado pelo Firebase para exclusões futuras
-                ...ordem,
-                precoEntrada: precoDeEntradaFixado,
-                lucroAtual: 0 // Será calculado dinamicamente no processarTradesDisparados baseado no precoEntrada fixo
-            };
-        });
-    } else {
-        operacoesAbertas = [];
-    }
-    renderizarTabelas();
-});
+let operacoesFechadas = [];
 
 // Elementos da Interface
 const txtSaldo = document.getElementById('txt-saldo');
@@ -57,17 +37,69 @@ const btnFecharModal = document.getElementById('btn-fechar-modal');
 const etapaLogin = document.getElementById('etapa-login');
 const etapaOrdem = document.getElementById('etapa-ordem');
 
-// 1. MONITORAMENTO DO PREÇO EM TEMPO REAL DIRETO DA DERIV
+// ==========================================
+// 🔄 SINCRONIZAÇÃO EM TEMPO REAL COM O FIREBASE (ANTI-CRASH)
+// ==========================================
+
+// 1. ESCUTADOR DO SALDO: Recupera o último saldo salvo na nuvem
+onValue(dbRefSaldo, (snapshot) => {
+    const saldoSalvo = snapshot.val();
+    if (saldoSalvo !== null) {
+        saldo = parseFloat(saldoSalvo);
+    } else {
+        // Se for a primeira vez rodando e não tiver saldo no Firebase, cria o inicial de $100
+        set(dbRefSaldo, saldo);
+    }
+    txtSaldo.innerText = `$${saldo.toFixed(2)}`;
+});
+
+// 2. ESCUTADOR DAS ORDENS ABERTAS
+onValue(dbRefAbertas, (snapshot) => {
+    const dados = snapshot.val();
+    if (dados) {
+        operacoesAbertas = Object.keys(dados).map(key => {
+            const ordem = dados[key];
+            const precoDeEntradaFixado = ordem.precoEntrada ? parseFloat(ordem.precoEntrada) : 0;
+
+            return {
+                id_firebase: key,
+                ...ordem,
+                precoEntrada: precoDeEntradaFixado,
+                lucroAtual: 0
+            };
+        });
+    } else {
+        operacoesAbertas = [];
+    }
+    renderizarTabelas();
+});
+
+// 3. ESCUTADOR DO HISTÓRICO (ORDENS FECHADAS): Garante que o histórico resiste a reinicializações
+onValue(dbRefFechadas, (snapshot) => {
+    const dados = snapshot.val();
+    if (dados) {
+        operacoesFechadas = Object.keys(dados).map(key => ({
+            id_firebase: key,
+            ...dados[key]
+        }));
+    } else {
+        operacoesFechadas = [];
+    }
+    renderizarTabelas();
+});
+
+
+// ==========================================
+// 📈 CONEXÃO DERIV & LÓGICA DE TRADING
+// ==========================================
+
 function conectarPrecoOuro() {
-    const app_id = 1089; // App ID padrão e gratuito da Deriv
+    const app_id = 1089;
     const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${app_id}`);
     let ultimoPreco = 0;
 
     ws.onopen = () => {
-        const solicitacao = {
-            ticks: "frxXAUUSD"
-        };
-        ws.send(JSON.stringify(solicitacao));
+        ws.send(JSON.stringify({ ticks: "frxXAUUSD" }));
     };
 
     ws.onmessage = (evento) => {
@@ -98,7 +130,6 @@ function conectarPrecoOuro() {
     };
 }
 
-// 2. LÓGICA MATEMÁTICA DOS TRADES (Cálculo de Lucro flutuante baseado no precoEntrada fixado do Firebase)
 function processarTradesDisparados() {
     let lucroFlutuanteTotal = 0;
     let indicesParaFechar = [];
@@ -112,27 +143,19 @@ function processarTradesDisparados() {
             diferencaPreco = precoAtualOuro - trade.precoEntrada;
             
             if (typeof trade.sl === 'number' && !isNaN(trade.sl) && trade.sl > 0) {
-                if (precoAtualOuro <= trade.sl) {
-                    indicesParaFechar.push(index);
-                }
+                if (precoAtualOuro <= trade.sl) indicesParaFechar.push(index);
             }
             if (typeof trade.tp === 'number' && !isNaN(trade.tp) && trade.tp > 0) {
-                if (precoAtualOuro >= trade.tp) {
-                    indicesParaFechar.push(index);
-                }
+                if (precoAtualOuro >= trade.tp) indicesParaFechar.push(index);
             }
         } else { // SELL
             diferencaPreco = trade.precoEntrada - precoAtualOuro;
             
             if (typeof trade.sl === 'number' && !isNaN(trade.sl) && trade.sl > 0) {
-                if (precoAtualOuro >= trade.sl) {
-                    indicesParaFechar.push(index);
-                }
+                if (precoAtualOuro >= trade.sl) indicesParaFechar.push(index);
             }
             if (typeof trade.tp === 'number' && !isNaN(trade.tp) && trade.tp > 0) {
-                if (precoAtualOuro <= trade.tp) {
-                    indicesParaFechar.push(index);
-                }
+                if (precoAtualOuro <= trade.tp) indicesParaFechar.push(index);
             }
         }
 
@@ -145,7 +168,6 @@ function processarTradesDisparados() {
 
     if (indicesParaFechar.length > 0) {
         let indicesUnicos = [...new Set(indicesParaFechar)].sort((a, b) => b - a);
-        
         for (let i = 0; i < indicesUnicos.length; i++) {
             fecharOperacao(indicesUnicos[i]);
         }
@@ -158,24 +180,36 @@ function fecharOperacao(index) {
     let trade = operacoesAbertas[index];
     if (!trade) return;
     
+    // 1. Atualiza o saldo localmente e envia o novo saldo definitivo para o Firebase
     saldo += trade.lucroAtual;
-    trade.resultadoFinal = trade.lucroAtual >= 0 ? `+$${trade.lucroAtual.toFixed(2)}` : `-$${Math.abs(trade.lucroAtual).toFixed(2)}`;
-    trade.status = trade.lucroAtual >= 0 ? 'WIN' : 'LOSS';
+    set(dbRefSaldo, saldo); 
 
-    operacoesFechadas.push(trade);
-    
-    // Remove da nuvem (Firebase) usando o ID gerado automaticamente
+    // 2. Prepara os dados do histórico
+    const tradeFechado = {
+        ativo: trade.ativo,
+        tipo: trade.tipo,
+        lote: trade.lote,
+        precoEntrada: trade.precoEntrada,
+        precoSaida: precoAtualOuro,
+        resultadoFinal: trade.lucroAtual >= 0 ? `+$${trade.lucroAtual.toFixed(2)}` : `-$${Math.abs(trade.lucroAtual).toFixed(2)}`,
+        status: trade.lucroAtual >= 0 ? 'WIN' : 'LOSS',
+        timestampFechar: new Date().toISOString()
+    };
+
+    // 3. Salva a operação de forma permanente na tabela de histórico ('operacoesFechadas') no Firebase
+    push(dbRefFechadas, tradeFechado);
+
+    // 4. Remove a operação da tabela de ativos ('operacoesAbertas') no Firebase
     if (trade.id_firebase) {
         const itemRef = ref(database, `operacoesAbertas/${trade.id_firebase}`);
         remove(itemRef);
-    } else {
-        operacoesAbertas.splice(index, 1);
     }
-
-    txtSaldo.innerText = `$${saldo.toFixed(2)}`;
 }
 
-// 3. RENDERIZAÇÃO DAS TABELAS NA TELA
+// ==========================================
+// 🖥️ INTERFACE E INTERAÇÕES (UI)
+// ==========================================
+
 function renderizarTabelas() {
     if (operacoesAbertas.length === 0) {
         tabelaAbertas.innerHTML = `<tr><td colspan="6" style="color:#64748b; text-align:center;">Nenhuma operação aberta</td></tr>`;
@@ -197,7 +231,9 @@ function renderizarTabelas() {
     if (operacoesFechadas.length === 0) {
         tabelaFechadas.innerHTML = `<tr><td colspan="5" style="color:#64748b; text-align:center;">Nenhum histórico disponível</td></tr>`;
     } else {
-        tabelaFechadas.innerHTML = operacoesFechadas.map(trade => `
+        // Exibe o histórico ordenado pelo mais recente primeiro
+        const historicoOrdenado = [...operacoesFechadas].reverse();
+        tabelaFechadas.innerHTML = historicoOrdenado.map(trade => `
             <tr>
                 <td><b>${trade.ativo}</b></td>
                 <td class="${trade.tipo.toLowerCase()}">${trade.tipo}</td>
@@ -209,7 +245,6 @@ function renderizarTabelas() {
     }
 }
 
-// 4. CONTROLE DAS JANELAS POPUP (MODAL / LOGIN / ENVIAR ORDEM MANUAL)
 btnAbrirModal.onclick = () => {
     modal.style.display = 'flex';
     etapaLogin.style.display = 'block';
@@ -236,7 +271,6 @@ function efetuarLogin() {
     }
 }
 
-// Enviar a Nova Ordem Manual via Painel
 document.getElementById('btn-enviar-ordem').onclick = criarNovaOrdem;
 function criarNovaOrdem() {
     if (precoAtualOuro === 0) {
@@ -252,7 +286,6 @@ function criarNovaOrdem() {
     const slValor = slInput ? parseFloat(slInput) : null;
     const tpValor = tpInput ? parseFloat(tpInput) : null;
 
-    // --- REGRAS DE VALIDAÇÃO DE PROTEÇÃO TÉCNICA (MANUAL) ---
     if (tipoOrdem === 'BUY') {
         if (slValor !== null && slValor >= precoAtualOuro) {
             alert(`Erro no Stop Loss!\nPara COMPRAS (BUY), o SL deve ser MENOR que o preço atual ($${precoAtualOuro.toFixed(2)}).`);
@@ -273,21 +306,18 @@ function criarNovaOrdem() {
         }
     }
 
-    // Criando o objeto da ordem MANUAL pegando o preço exato que está rodando no momento do clique
     const novaOrdem = {
         ativo: document.getElementById('slc-ativo').value,
         tipo: tipoOrdem,
         lote: lote,
-        precoEntrada: precoAtualOuro, // O painel web envia o preço fixo atual de mercado no clique
+        precoEntrada: precoAtualOuro, 
         sl: slValor,
         tp: tpValor
     };
 
-    // Salva direto no Firebase.
     push(dbRefAbertas, novaOrdem);
     
     modal.style.display = 'none';
-    
     document.getElementById('ipt-user').value = '';
     document.getElementById('ipt-pass').value = '';
     document.getElementById('ipt-sl').value = '';
@@ -303,5 +333,4 @@ modal.addEventListener('keydown', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     conectarPrecoOuro();
-    renderizarTabelas();
 });
