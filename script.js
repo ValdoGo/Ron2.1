@@ -180,11 +180,14 @@ function fecharOperacao(index) {
     let trade = operacoesAbertas[index];
     if (!trade) return;
     
-    // 1. Atualiza o saldo localmente e envia o novo saldo definitivo para o Firebase
+    // 1. Calcula e atualiza o novo saldo localmente
     saldo += trade.lucroAtual;
-    set(dbRefSaldo, saldo); 
+    
+    // 2. Formata a data e hora atual de forma legível (DD/MM/AAAA HH:MM:SS)
+    const agora = new Date();
+    const dataFormatada = agora.toLocaleDateString('pt-PT') + ' ' + agora.toLocaleTimeString('pt-PT');
 
-    // 2. Prepara os dados do histórico
+    // 3. Prepara os dados do histórico contendo a data e o saldo resultante exato pós-fecho
     const tradeFechado = {
         ativo: trade.ativo,
         tipo: trade.tipo,
@@ -193,13 +196,17 @@ function fecharOperacao(index) {
         precoSaida: precoAtualOuro,
         resultadoFinal: trade.lucroAtual >= 0 ? `+$${trade.lucroAtual.toFixed(2)}` : `-$${Math.abs(trade.lucroAtual).toFixed(2)}`,
         status: trade.lucroAtual >= 0 ? 'WIN' : 'LOSS',
-        timestampFechar: new Date().toISOString()
+        dataFecho: dataFormatada,
+        saldoAposFecho: saldo // Guarda o saldo exato após a operação
     };
 
-    // 3. Salva a operação de forma permanente na tabela de histórico ('operacoesFechadas') no Firebase
+    // 4. Envia o novo saldo definitivo para o Firebase
+    set(dbRefSaldo, saldo); 
+
+    // 5. Salva a operação de forma permanente na tabela de histórico no Firebase
     push(dbRefFechadas, tradeFechado);
 
-    // 4. Remove a operação da tabela de ativos ('operacoesAbertas') no Firebase
+    // 6. Remove a operação da tabela de ativos no Firebase
     if (trade.id_firebase) {
         const itemRef = ref(database, `operacoesAbertas/${trade.id_firebase}`);
         remove(itemRef);
@@ -210,7 +217,12 @@ function fecharOperacao(index) {
 // 🖥️ INTERFACE E INTERAÇÕES (UI)
 // ==========================================
 
+// ==========================================
+// 🖥️ INTERFACE E INTERAÇÕES (UI)
+// ==========================================
+
 function renderizarTabelas() {
+    // 1. RENDERIZAÇÃO DA TABELA DE OPERAÇÕES ABERTAS
     if (operacoesAbertas.length === 0) {
         tabelaAbertas.innerHTML = `<tr><td colspan="6" style="color:#64748b; text-align:center;">Nenhuma operação aberta</td></tr>`;
     } else {
@@ -228,18 +240,20 @@ function renderizarTabelas() {
         `).join('');
     }
 
+    // 2. RENDERIZAÇÃO DA TABELA DE HISTÓRICO (OPERAÇÕES FECHADAS)
     if (operacoesFechadas.length === 0) {
-        tabelaFechadas.innerHTML = `<tr><td colspan="5" style="color:#64748b; text-align:center;">Nenhum histórico disponível</td></tr>`;
+        tabelaFechadas.innerHTML = `<tr><td colspan="6" style="color:#64748b; text-align:center;">Nenhum histórico disponível</td></tr>`;
     } else {
         // Exibe o histórico ordenado pelo mais recente primeiro
         const historicoOrdenado = [...operacoesFechadas].reverse();
         tabelaFechadas.innerHTML = historicoOrdenado.map(trade => `
             <tr>
-                <td><b>${trade.ativo}</b></td>
-                <td class="${trade.tipo.toLowerCase()}">${trade.tipo}</td>
-                <td>${trade.lote.toFixed(2)}</td>
-                <td style="color: ${trade.status === 'WIN' ? '#10b981' : '#ef4444'}; font-weight:bold;">${trade.resultadoFinal}</td>
-                <td><span class="${trade.status === 'WIN' ? 'badge-win' : 'badge-loss'}">${trade.status}</span></td>
+                <td><b>${trade.ativo}</b><br/><small style="color:#64748b;">${trade.dataFecho || '-'}</small></td>
+                <td class="${trade.tipo ? trade.tipo.toLowerCase() : ''}">${trade.tipo || '-'}</td>
+                <td>${trade.lote ? trade.lote.toFixed(2) : '0.00'}</td>
+                <td style="color: ${trade.status === 'WIN' ? '#10b981' : '#ef4444'}; font-weight:bold;">${trade.resultadoFinal || '$0.00'}</td>
+                <td><span class="${trade.status === 'WIN' ? 'badge-win' : 'badge-loss'}">${trade.status || 'LOSS'}</span></td>
+                <td><b>$${trade.saldoAposFecho ? trade.saldoAposFecho.toFixed(2) : '0.00'}</b></td>
             </tr>
         `).join('');
     }
