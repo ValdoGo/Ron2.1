@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Trades - Simulador</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>RonBot Trader 2.1</h1>
+                <div class="status-bot">
+                    <span class="ping-icon"></span>
+                    <span>Bot Status: <b>ONLINE</b></span>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="financeiro">
+                    <span>Saldo: <b id="txt-saldo">$100.00</b></span>
+                    <span>Equity: <b id="txt-equity">$100.00</b></span>
+                </div>
+                <button id="btn-abrir-modal" class="btn-mais">+</button>
+            </div>
+        </header>
+
+        <div class="monitor-topo">
+            Ouro (XAUUSD): <span id="preco-xau">Carregando...</span>
+        </div>
+
+        <main class="grid">
+            <section class="card">
+                <h2 class="title-abertas">🔄 Operações Abertas</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ativo</th>
+                                <th>Tipo</th>
+                                <th>Lote</th>
+                                <th>Entrada</th>
+                                <th class="col-sl-tp">SL / TP</th> 
+                                <th>Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-abertas">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="title-fechadas">✅ Histórico de Fechadas</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ativo</th>
+                                <th>Tipo</th>
+                                <th>Lote</th>
+                                <th>Resultado</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-fechadas">
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-container" style="display: none;">
+        <div class="modal-conteudo">
+            <span id="btn-fechar-modal" class="fechar">&times;</span>
+            
+            <div id="etapa-login">
+                <h3>Acesso Restrito</h3>
+                <input type="text" id="ipt-user" placeholder="Usuário (Admin)">
+                <input type="password" id="ipt-pass" placeholder="Senha">
+                <button id="btn-login">Entrar</button>
+                <p id="erro-login" style="color: #ef4444; font-size: 0.85rem; display: none;">Dados incorretos!</p>
+            </div>
+
+            <div id="etapa-ordem" style="display: none;">
+                <h3>Abrir Nova Operação</h3>
+                <label>Ativo:</label>
+                <select id="slc-ativo">
+                    <option value="XAUUSD">XAUUSD (Ouro)</option>
+                </select>
+
+                <label>Direção:</label>
+                <select id="slc-tipo">
+                    <option value="BUY">BUY (Compra)</option>
+                    <option value="SELL">SELL (Venda)</option>
+                </select>
+
+                <label>Lote:</label>
+                <input type="number" id="ipt-lote" step="0.01" value="0.10">
+
+                <label>Stop Loss (SL):</label>
+                <input type="number" id="ipt-sl" step="0.1">
+
+                <label>Take Profit (TP):</label>
+                <input type="number" id="ipt-tp" step="0.1">
+
+                <button id="btn-enviar-ordem">Abrir Trade (Enter)</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
