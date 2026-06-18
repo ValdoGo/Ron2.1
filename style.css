@@ -187,12 +187,20 @@ header h1 {
 /* Tabelas Estilizadas */
 .table-container {
     overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch; /* Deixa o scroll mais suave no iOS */
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 500px; /* Alinha os dados elegantemente sem esmagar as colunas no mobile */
 }
 
 th {
@@ -374,6 +382,11 @@ small {
 }
 
 @media (max-width: 480px) {
+   .card {
+        padding: 12px;
+        width: 100%;
+        overflow: hidden; /* Evita que qualquer elemento interno force a saída */
+    }
     body { padding: 8px; }
     header h1 { font-size: 1.4rem; }
     .header-right { display: grid; grid-template-columns: 1fr auto; gap: 10px; width: 100%; }
