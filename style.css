@@ -2,6 +2,9 @@
    PREMIUM DARK MODE - THEME TRADING DASHBOARD
    ========================================== */
 
+/* Importação das fontes profissionais do Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 /* Reset e Variáveis de Cores */
 :root {
     --bg-main: #060814;          /* Fundo principal profundo */
@@ -14,6 +17,10 @@
     --accent-hover: #4f46e5;     /* Roxo mais escuro para hover */
     --green: #10b981;            /* Verde neon para BUY/WIN */
     --red: #f43f5e;              /* Vermelho neon para SELL/LOSS */
+    
+    /* Variáveis de Fontes para organização */
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 }
 
 * {
@@ -25,9 +32,10 @@
 body {
     background-color: var(--bg-main);
     color: var(--text-main);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-sans);
     padding: 24px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
 }
 
 .container {
@@ -91,13 +99,15 @@ header h1 {
 .financeiro span {
     font-size: 0.85rem;
     color: var(--text-muted);
+    font-weight: 500;
 }
 
 .financeiro b {
     display: block;
     font-size: 1.1rem;
     color: var(--text-main);
-    font-family: monospace;
+    font-family: var(--font-mono);
+    font-weight: 700;
 }
 
 .btn-mais {
@@ -137,7 +147,7 @@ header h1 {
 }
 
 #preco-xau {
-    font-family: monospace;
+    font-family: var(--font-mono);
     font-size: 1.3rem;
     font-weight: 700;
     transition: color 0.1s ease;
@@ -199,6 +209,7 @@ td {
     padding: 14px 8px;
     border-bottom: 1px solid rgba(30, 38, 74, 0.5);
     font-size: 0.9rem;
+    font-family: var(--font-mono); /* Alinha números das tabelas perfeitamente */
 }
 
 tr:last-child td {
@@ -216,6 +227,7 @@ tr:last-child td {
     font-weight: 600;
     font-size: 0.8rem;
     border: 1px solid rgba(16, 185, 129, 0.2);
+    font-family: var(--font-sans);
 }
 
 .badge-loss {
@@ -226,12 +238,14 @@ tr:last-child td {
     font-weight: 600;
     font-size: 0.8rem;
     border: 1px solid rgba(244, 63, 94, 0.2);
+    font-family: var(--font-sans);
 }
 
 small {
     color: var(--text-muted);
     display: block;
     font-size: 0.8rem;
+    font-family: var(--font-sans);
 }
 
 /* Modais */
@@ -264,12 +278,14 @@ small {
     border-radius: 8px; border: 1px solid var(--border-color);
     background-color: var(--bg-input); color: white; 
     font-size: 0.9rem; outline: none;
+    font-family: var(--font-sans);
 }
 
 .modal-conteudo button {
     background: linear-gradient(135deg, #818cf8, #6366f1);
     border: none; color: white; font-weight: 600; cursor: pointer;
     width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px;
+    font-family: var(--font-sans);
 }
 
 /* ==========================================
@@ -312,7 +328,7 @@ small {
 .stat-card small {
     color: #64748b;
     text-transform: uppercase;
-    font-weight: bold;
+    font-weight: 700;
     font-size: 0.65rem;
     white-space: nowrap;
     overflow: hidden;
@@ -322,8 +338,9 @@ small {
 .stat-card h3 {
     margin: 4px 0 0 0;
     color: #f8fafc;
-    font-size: 1rem;
-    font-family: monospace;
+    font-size: 1.1rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
 }
 
 .chart-panel {
@@ -331,7 +348,7 @@ small {
     padding: 10px;
     border-radius: 8px;
     position: relative;
-    height: 160px; /* Padrão Mobile compactado */
+    height: 160px;
     width: 100%;
 }
 
@@ -369,11 +386,10 @@ small {
     .modal-conteudo { width: 90%; padding: 20px; }
 }
 
-/* Ampliação Layout para Desktops (Telas Grandes) */
 @media (min-width: 1024px) {
     .analytics-container {
         display: grid;
-        grid-template-columns: 1fr 2.5fr; /* Divide estatísticas e gráfico perfeitamente no PC */
+        grid-template-columns: 1fr 2.5fr;
         padding: 20px;
         gap: 20px;
     }
@@ -396,5 +412,5 @@ small {
 
     .stat-card small { font-size: 0.75rem; }
     .stat-card h3 { font-size: 1.35rem; }
-    .chart-panel { height: 240px; } /* Dá o tamanho correto ao gráfico no PC sem esticar */
+    .chart-panel { height: 240px; }
 }
