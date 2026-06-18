@@ -1,6 +1,5 @@
 /* ==========================================
    PREMIUM DARK MODE - THEME TRADING DASHBOARD
-/* deploy fix */
    ========================================== */
 
 /* Reset e Variáveis de Cores */
@@ -144,7 +143,7 @@ header h1 {
     transition: color 0.1s ease;
 }
 
-/* Estrutura das Seções (Grid) */
+/* Estrutura das Seções (Grid das Tabelas) */
 .grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -206,7 +205,6 @@ tr:last-child td {
     border-bottom: none;
 }
 
-/* Modificadores de Cores (Cotações e Ordens) */
 .buy { color: var(--green); font-weight: 600; }
 .sell { color: var(--red); font-weight: 600; }
 
@@ -236,12 +234,12 @@ small {
     font-size: 0.8rem;
 }
 
-/* Janela Flutuante (Modal de Envio de Ordens) */
+/* Modais */
 #modal-container {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(4, 6, 20, 0.8);
-    backdrop-filter: blur(4px); /* Efeito borrado chique no fundo */
+    backdrop-filter: blur(4px);
     display: flex; justify-content: center; align-items: center;
     z-index: 1000;
 }
@@ -259,146 +257,25 @@ small {
 .fechar {
     position: absolute; top: 15px; right: 20px;
     font-size: 1.5rem; cursor: pointer; color: var(--text-muted);
-    transition: color 0.2s;
-}
-.fechar:hover { color: var(--text-main); }
-
-.modal-conteudo h3 {
-    font-size: 1.2rem;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.modal-conteudo label {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    display: block;
-    margin-top: 10px;
 }
 
 .modal-conteudo input, .modal-conteudo select {
     width: 100%; padding: 11px; margin-top: 5px; margin-bottom: 10px;
     border-radius: 8px; border: 1px solid var(--border-color);
     background-color: var(--bg-input); color: white; 
-    box-sizing: border-box; font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.modal-conteudo input:focus, .modal-conteudo select:focus {
-    border-color: var(--accent);
+    font-size: 0.9rem; outline: none;
 }
 
 .modal-conteudo button {
     background: linear-gradient(135deg, #818cf8, #6366f1);
     border: none; color: white; font-weight: 600; cursor: pointer;
     width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px;
-    font-size: 0.95rem; transition: background 0.2s;
-}
-.modal-conteudo button:hover {
-    background: var(--accent-hover);
 }
 
-/* Responsividade de Dispositivos Móveis */
-@media (max-width: 768px) {
-    body { padding: 12px; }
-    header { flex-direction: column; gap: 16px; align-items: flex-start; }
-    .header-right { width: 100%; justify-content: space-between; }
-    .hide-mobile { display: none !important; }
-    td, th { padding: 12px 6px; font-size: 0.85rem; }
-}
-
-/* Ocultar coluna SL/TP em telas pequenas (Celulares) */
-@media (max-width: 600px) {
-    .col-sl-tp {
-        display: none !important;
-    }
-}
-
-/* ==========================================
-   OTIMIZAÇÃO ULTRA-COMPACTA PARA TELAS PEQUENAS
-   ========================================== */
-@media (max-width: 480px) {
-    body {
-        padding: 8px; /* Reduz a perda de espaço nas bordas da tela */
-    }
-
-    header {
-        gap: 12px;
-        padding-bottom: 16px;
-        margin-bottom: 16px;
-    }
-
-    header h1 {
-        font-size: 1.4rem; /* Encolhe o título principal */
-    }
-
-    /* Ajusta a área do Saldo e Equity */
-    .header-right {
-        display: grid;
-        grid-template-columns: 1fr auto; /* Alinha o bloco financeiro e o botão + lado a lado */
-        gap: 10px;
-        width: 100%;
-    }
-
-    .financeiro {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* Divide Saldo e Equity lado a lado no espaço disponível */
-        padding: 8px 12px;
-        gap: 8px;
-    }
-
-    .financeiro span {
-        font-size: 0.75rem;
-    }
-
-    .financeiro b {
-        font-size: 0.95rem; /* Evita que valores grandes quebrem a linha */
-    }
-
-    .btn-mais {
-        width: 38px;
-        height: 38px;
-        font-size: 1.3rem;
-    }
-
-    /* Redução cirúrgica nas tabelas para evitar scroll */
-    .card {
-        padding: 12px; /* Dá mais espaço útil interno para os dados */
-    }
-
-    th {
-        font-size: 0.65rem;
-        padding: 8px 4px;
-    }
-
-    td {
-        padding: 10px 4px;
-        font-size: 0.78rem; /* Letras ligeiramente menores mantêm os números inteiros visíveis */
-    }
-
-    .badge-win, .badge-loss {
-        padding: 2px 6px;
-        font-size: 0.7rem;
-    }
-
-    /* Reduz o tamanho do modal para caber em telas estreitas */
-    .modal-conteudo {
-        width: 90%;
-        padding: 20px;
-    }
-}
-
-
-/* ==========================================
-   ESTILIZAÇÃO E RESPONSIVIDADE DO GRÁFICO
-   ========================================== */
 /* ==========================================
    SISTEMA DE ANALYTICS E GRÁFICO (UNIFICADO)
    ========================================== */
 
-/* Configuração Padrão: Mobile First */
 .analytics-container {
     display: flex;
     flex-direction: column;
@@ -425,12 +302,12 @@ small {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    border-top: 3px solid transparent; /* Reserva o espaço para não saltar */
+    border-top: 3px solid transparent;
 }
 
-.stat-blue { border-top-color: #3b82f6; border-left: none; }
-.stat-green { border-top-color: #10b981; border-left: none; }
-.stat-red { border-top-color: #ef4444; border-left: none; }
+.stat-blue { border-top-color: #3b82f6; }
+.stat-green { border-top-color: #10b981; }
+.stat-red { border-top-color: #ef4444; }
 
 .stat-card small {
     color: #64748b;
@@ -454,53 +331,70 @@ small {
     padding: 10px;
     border-radius: 8px;
     position: relative;
-    height: 160px; /* Altura controlada para mobile */
+    height: 160px; /* Padrão Mobile compactado */
     width: 100%;
 }
 
-/* O Chart.js precisa que o canvas herde o tamanho do pai de forma correta */
 .chart-panel canvas {
     width: 100% !important;
     height: 100% !important;
 }
 
 /* ==========================================
-   ADAPTAÇÃO PARA DESKTOP (Telas Maiores)
+   RESPONSIVIDADE GERAL (Tablets e Computadores)
    ========================================== */
+
+@media (max-width: 768px) {
+    body { padding: 12px; }
+    header { flex-direction: column; gap: 16px; align-items: flex-start; }
+    .header-right { width: 100%; justify-content: space-between; }
+    .hide-mobile { display: none !important; }
+    td, th { padding: 12px 6px; font-size: 0.85rem; }
+}
+
+@media (max-width: 600px) {
+    .col-sl-tp { display: none !important; }
+}
+
+@media (max-width: 480px) {
+    body { padding: 8px; }
+    header h1 { font-size: 1.4rem; }
+    .header-right { display: grid; grid-template-columns: 1fr auto; gap: 10px; width: 100%; }
+    .financeiro { display: grid; grid-template-columns: 1fr 1fr; padding: 8px 12px; gap: 8px; }
+    .financeiro b { font-size: 0.95rem; }
+    .btn-mais { width: 38px; height: 38px; font-size: 1.3rem; }
+    .card { padding: 12px; }
+    th { font-size: 0.65rem; padding: 8px 4px; }
+    td { padding: 10px 4px; font-size: 0.78rem; }
+    .modal-conteudo { width: 90%; padding: 20px; }
+}
+
+/* Ampliação Layout para Desktops (Telas Grandes) */
 @media (min-width: 1024px) {
     .analytics-container {
         display: grid;
-        grid-template-columns: 1fr 2.5fr; /* Estatísticas à esquerda, gráfico à direita */
+        grid-template-columns: 1fr 2.5fr; /* Divide estatísticas e gráfico perfeitamente no PC */
         padding: 20px;
         gap: 20px;
     }
     
     .stats-panel {
         display: flex;
-        flex-direction: column; /* Empilha verticalmente no desktop */
+        flex-direction: column;
         gap: 12px;
     }
 
     .stat-card {
         padding: 14px;
         text-align: left;
-        border-top: none; /* Remove a borda superior do mobile */
+        border-top: none;
     }
 
-    /* Cores voltam para a lateral esquerda no desktop */
     .stat-blue { border-left: 4px solid #3b82f6; border-top: none; }
     .stat-green { border-left: 4px solid #10b981; border-top: none; }
     .stat-red { border-left: 4px solid #ef4444; border-top: none; }
 
-    .stat-card small {
-        font-size: 0.75rem;
-    }
-
-    .stat-card h3 {
-        font-size: 1.35rem;
-    }
-
-    .chart-panel {
-        height: 240px; /* Mais espaço vertical no monitor do PC */
-    }
+    .stat-card small { font-size: 0.75rem; }
+    .stat-card h3 { font-size: 1.35rem; }
+    .chart-panel { height: 240px; } /* Dá o tamanho correto ao gráfico no PC sem esticar */
 }
